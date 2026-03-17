@@ -23,6 +23,16 @@
         />
         <!-- Navigation -->
         <TicketNavigation :key="ticket.name" />
+        <!-- CREATE SVR Button -->
+        <Button
+          label="Quick SVR Log"
+          variant="solid"
+          @click="showCreateSVRModal = true"
+        >
+          <template #prefix>
+            <LucidePlus class="h-4 w-4" />
+          </template>
+        </Button>
         <!-- Custom Actions -->
         <div v-if="normalActions.length" class="flex gap-2">
           <Button v-for="action in normalActions" v-bind="action">
@@ -77,12 +87,19 @@
     @update="ticket.reload()"
   />
   <TicketSubjectModal v-if="showSubjectDialog" v-model="showSubjectDialog" />
+  <CreateSVRModal
+    v-if="showCreateSVRModal"
+    v-model="showCreateSVRModal"
+    :ticket-id="ticket.doc.name"
+    @success="handleSVRCreated"
+  />
 </template>
 
 <script setup lang="ts">
 import { MultipleAvatar } from "@/components";
 import LayoutHeader from "@/components/LayoutHeader.vue";
 import TicketMergeModal from "@/components/ticket/TicketMergeModal.vue";
+import CreateSVRModal from "./CreateSVRModal.vue";
 import { setupCustomizations } from "@/composables/formCustomisation";
 import { useNotifyTicketUpdate } from "@/composables/realtime";
 import { useShortcut } from "@/composables/shortcuts";
@@ -97,7 +114,7 @@ import {
 } from "@/types";
 import { HDTicketStatus } from "@/types/doctypes";
 import { getIcon } from "@/utils";
-import { Breadcrumbs, call, Dropdown, toast } from "frappe-ui";
+import { Breadcrumbs, Button, call, Dropdown, toast } from "frappe-ui";
 import { __ } from "@/translation";
 import {
   computed,
@@ -112,6 +129,7 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import LucideMerge from "~icons/lucide/merge";
+import LucidePlus from "~icons/lucide/plus";
 import { IndicatorIcon } from "../icons";
 import TicketNavigation from "./TicketNavigation.vue";
 import TicketSLA from "./TicketSLA.vue";
@@ -134,6 +152,7 @@ const customizations = inject(CustomizationSymbol);
 const activities = inject(ActivitiesSymbol);
 
 const showSubjectDialog = ref(false);
+const showCreateSVRModal = ref(false);
 
 const { notifyTicketUpdate } = useNotifyTicketUpdate(ticket.value?.name);
 const statusDropdown = computed(() => {
@@ -275,6 +294,11 @@ watchEffect(async () => {
 });
 
 const statusRef = useTemplateRef("statusRef");
+
+function handleSVRCreated() {
+  toast.success("SVR created successfully");
+  // Optionally reload ticket or perform other actions
+}
 
 onMounted(() => {
   useShortcut("s", () => {
