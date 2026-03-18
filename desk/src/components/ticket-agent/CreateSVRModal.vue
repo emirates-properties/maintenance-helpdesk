@@ -138,9 +138,11 @@
               v-model="formData.unit"
               :options="unitOptions ?? []"
               placeholder="Select unit..."
-              :disabled="!formData.property"
+              :disabled="!formData.property || unitResource.loading"
               size="sm"
             />
+            <div v-if="unitResource.loading" class="text-xs text-gray-500 mt-1">Loading units...</div>
+            <div v-else-if="formData.property && unitOptions.length === 0" class="text-xs text-gray-500 mt-1">No units found for this property</div>
             <div v-if="errors.unit" class="text-sm text-red-600 mt-1">{{ errors.unit }}</div>
           </div>
         </div>
@@ -355,12 +357,21 @@ const propertyResource = createResource({
 
 const unitResource = createResource({
   url: "frappe.client.get_list",
-  makeParams: () => ({
-    doctype: "PM Unit",
-    fields: JSON.stringify(["name", "unit_code", "pact_id", "property"]),
-    filters: JSON.stringify([["property", "=", formData.value.property]]),
-    limit_page_length: 999
-  }),
+  makeParams: () => {
+    const params = {
+      doctype: "PM Unit",
+      fields: JSON.stringify(["name", "unit_code", "pact_id", "property"]),
+      limit_page_length: 999
+    }
+    
+    // Only add property filter if a property is selected
+    if (formData.value.property) {
+      const propertyValue = formData.value.property?.value || formData.value.property
+      params.filters = JSON.stringify([["property", "=", propertyValue]])
+    }
+    
+    return params
+  },
   auto: false
 });
 
@@ -802,6 +813,7 @@ const clearPasteData = () => {
 const onPropertyChange = (selectedValue: string | null) => {
   formData.value.unit = null;
   if (selectedValue) {
+    // Fetch units with new property filter
     unitResource.fetch();
   }
 };
@@ -906,6 +918,7 @@ watch(show, (newValue) => {
 
 watch(() => formData.value?.property, (newProperty) => {
   if (newProperty) {
+    // Fetch units when property changes
     unitResource.fetch();
   }
 }, { immediate: false });

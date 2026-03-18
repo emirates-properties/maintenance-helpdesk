@@ -69,6 +69,18 @@ def create_svr_log(data):
         # Insert the document
         doc.insert()
         
+        # Link SVR log back to the ticket if ticket_id is provided
+        ticket_id = clean_value(data.get('ticket_id'))
+        if ticket_id:
+            try:
+                # Update the HD Ticket with the SVR log link
+                if frappe.db.exists('HD Ticket', ticket_id):
+                    frappe.db.set_value('HD Ticket', ticket_id, 'svr_log_id', doc.name)
+                    frappe.logger().info(f"Linked SVR log {doc.name} to ticket {ticket_id}")
+            except Exception as link_error:
+                frappe.logger().warning(f"Could not link SVR to ticket: {str(link_error)}")
+                # Don't fail the whole operation if linking fails
+        
         # Commit the transaction
         frappe.db.commit()
         
