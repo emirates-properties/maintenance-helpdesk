@@ -6,8 +6,9 @@
     class="[&_[role='tab']]:px-0 [&_[role='tablist']]:px-5 [&_[role='tablist']]:gap-7.5 [&_[role='tablist']]:flex-shrink-0"
   >
     <template #tab-panel="{ tab }">
+      <TicketSVRDetails v-if="tab.name === 'svr'" />
       <TicketAgentActivities
-        v-if="Boolean(activities.data)"
+        v-else-if="Boolean(activities.data)"
         ref="ticketAgentActivitiesRef"
         :activities="filterActivities(tab.name as TicketTab)"
         :title="tab.label"
@@ -53,6 +54,7 @@
 import {
   ActivityIcon,
   CommentIcon,
+  DetailsIcon,
   EmailIcon,
   PhoneIcon,
 } from "@/components/icons";
@@ -69,6 +71,7 @@ import { LoadingIndicator, Tabs } from "frappe-ui";
 import { storeToRefs } from "pinia";
 import { computed, ComputedRef, defineAsyncComponent, inject, ref } from "vue";
 import TicketAgentActivities from "../ticket/TicketAgentActivities.vue";
+import TicketSVRDetails from "./TicketSVRDetails.vue";
 
 const CommunicationArea = defineAsyncComponent(
   () => import("@/components/CommunicationArea.vue")
@@ -98,6 +101,11 @@ const tabs: ComputedRef<TabObject[]> = computed(() => {
       name: "comment",
       label: "Comments",
       icon: CommentIcon,
+    },
+    {
+      name: "svr",
+      label: "SVR Details",
+      icon: DetailsIcon,
     },
   ];
 

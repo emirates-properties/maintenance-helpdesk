@@ -15,6 +15,9 @@
   "priority",
   "status_category",
   "svr_log_id",
+  "property",
+  "contract_no",
+  "unit",
   "cb00",
   "ticket_type",
   "agent_group",
@@ -470,13 +473,31 @@
    "fieldtype": "Link",
    "label": "SVR Log Id",
    "options": "EPFM Maintanace Log"
+  },
+  {
+   "fieldname": "property",
+   "fieldtype": "Link",
+   "label": "Property",
+   "options": "PM Property"
+  },
+  {
+   "fieldname": "contract_no",
+   "fieldtype": "Data",
+   "label": "Contract No",
+   "options": "PM Contract"
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Link",
+   "label": "Unit",
+   "options": "PM Unit"
   }
  ],
  "grid_page_length": 50,
  "icon": "fa fa-issue",
  "idx": 61,
  "links": [],
- "modified": "2026-03-18 10:06:00.405806",
+ "modified": "2026-03-18 16:39:08.614360",
  "modified_by": "Administrator",
  "module": "Helpdesk",
  "name": "HD Ticket",
