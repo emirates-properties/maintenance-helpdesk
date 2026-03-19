@@ -234,6 +234,27 @@
           :error="errors.remarks"
         />
 
+        <!-- Supervisor Inspection Required -->
+        <div class="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <input
+            type="checkbox"
+            id="supervisor-inspection"
+            v-model="formData.supervisor_inspection_required"
+            class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <div class="flex-1">
+            <label
+              for="supervisor-inspection"
+              class="block text-sm font-medium text-gray-900 cursor-pointer"
+            >
+              Supervisor Inspection Required
+            </label>
+            <p class="text-xs text-blue-700 mt-1">
+              Check this if supervisor inspection is required before marking this log as completed.
+            </p>
+          </div>
+        </div>
+
         <!-- Tags Section -->
         <div v-if="tagsOptions.length > 0" class="space-y-2">
           <label class="block text-sm font-medium text-gray-700">
@@ -322,6 +343,7 @@ const formData = ref({
   assigned_to: '',
   priority: null as string | null,
   remarks: '',
+  supervisor_inspection_required: false,
   tags: [] as string[]
 });
 
@@ -501,6 +523,7 @@ const resetForm = () => {
     assigned_to: '',
     priority: null,
     remarks: '',
+    supervisor_inspection_required: false,
     tags: []
   };
   errors.value = {};
@@ -635,8 +658,25 @@ const parsePastedData = () => {
       setTimeout(() => {
         const matchingUnit = unitOptions.value.find((u: any) => {
           const unitData = unitResource.data?.find((unit: any) => unit.name === u.value);
-          if (unitData?.pact_id && unitData.pact_id.toLowerCase() === unitText.toLowerCase()) {
-            return true;
+          if (unitData) {
+            const unitTextLower = unitText.toLowerCase().trim();
+            // Check against pact_id, unit_code, or name (with trimming)
+            if (unitData.pact_id && unitData.pact_id.toLowerCase().trim() === unitTextLower) {
+              return true;
+            }
+            if (unitData.unit_code && unitData.unit_code.toLowerCase().trim() === unitTextLower) {
+              return true;
+            }
+            if (unitData.name && unitData.name.toLowerCase().trim() === unitTextLower) {
+              return true;
+            }
+            // Also check if the text appears in the label (which includes both pact_id and unit_code)
+            if (u.label && u.label.toLowerCase().includes(unitTextLower)) {
+              const labelParts = u.label.toLowerCase().split('(');
+              if (labelParts[0].trim() === unitTextLower) {
+                return true;
+              }
+            }
           }
           return false;
         });
@@ -875,6 +915,7 @@ const handleSubmit = async () => {
       assigned_to: formData.value.assigned_to || null,
       priority: extractValue(formData.value.priority),
       remarks: formData.value.remarks || null,
+      supervisor_inspection_required: formData.value.supervisor_inspection_required ? 1 : 0,
       status: 'OPEN',
       work_done_by: 'EPFM'
     };

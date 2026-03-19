@@ -82,6 +82,108 @@
                 </span>
               </dd>
             </div>
+
+            <div>
+              <dt class="text-sm font-medium text-ink-gray-7">Zone</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ svrLog.zone || '-' }}
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-sm font-medium text-ink-gray-7">Property</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ svrLog.property || '-' }}
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-sm font-medium text-ink-gray-7">Unit</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ svrLog.unit || '-' }}
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-sm font-medium text-ink-gray-7">Contract Number</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ svrLog.contract_number || '-' }}
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-sm font-medium text-ink-gray-7">Tenant Name</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ svrLog.tenant_name || '-' }}
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-sm font-medium text-ink-gray-7">Service Category</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ svrLog.service_category || '-' }}
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-sm font-medium text-ink-gray-7">Assigned To</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ svrLog.assigned_to || '-' }}
+              </dd>
+            </div>
+
+            <div>
+              <dt class="text-sm font-medium text-ink-gray-7">Work Done By</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ svrLog.work_done_by || '-' }}
+              </dd>
+            </div>
+
+            <div v-if="svrLog.remarks" class="sm:col-span-2">
+              <dt class="text-sm font-medium text-ink-gray-7">Remarks</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9 bg-white rounded p-2">
+                {{ svrLog.remarks }}
+              </dd>
+            </div>
+
+            <div v-if="svrLog.supervisor_inspection_required !== undefined" class="sm:col-span-2">
+              <dt class="text-sm font-medium text-ink-gray-7">Supervisor Inspection Required</dt>
+              <dd class="mt-1">
+                <span
+                  class="px-2 py-1 text-xs font-medium rounded-full"
+                  :class="svrLog.supervisor_inspection_required ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'"
+                >
+                  {{ svrLog.supervisor_inspection_required ? 'Yes - Required' : 'No' }}
+                </span>
+              </dd>
+            </div>
+
+            <div v-if="svrLog.tags && svrLog.tags.length > 0" class="sm:col-span-2">
+              <dt class="text-sm font-medium text-ink-gray-7">Tags</dt>
+              <dd class="mt-1 flex flex-wrap gap-2">
+                <span
+                  v-for="tag in svrLog.tags"
+                  :key="tag"
+                  class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded"
+                >
+                  {{ tag }}
+                </span>
+              </dd>
+            </div>
+
+            <div v-if="svrLog.creation">
+              <dt class="text-sm font-medium text-ink-gray-7">Created</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ formatDateTime(svrLog.creation) }}
+              </dd>
+            </div>
+
+            <div v-if="svrLog.modified">
+              <dt class="text-sm font-medium text-ink-gray-7">Last Modified</dt>
+              <dd class="mt-1 text-sm text-ink-gray-9">
+                {{ formatDateTime(svrLog.modified) }}
+              </dd>
+            </div>
           </dl>
         </div>
       </div>
@@ -122,6 +224,17 @@ const formatDate = (dateString: string) => {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
+  });
+};
+
+const formatDateTime = (dateString: string) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   });
 };
 

@@ -18,6 +18,7 @@
   "property",
   "contract_no",
   "unit",
+  "tenant_id",
   "cb00",
   "ticket_type",
   "agent_group",
@@ -322,9 +323,8 @@
   },
   {
    "fieldname": "contact",
-   "fieldtype": "Link",
-   "label": "Contact",
-   "options": "Contact"
+   "fieldtype": "Data",
+   "label": "Contact"
   },
   {
    "fieldname": "customer",
@@ -491,13 +491,18 @@
    "fieldtype": "Link",
    "label": "Unit",
    "options": "PM Unit"
+  },
+  {
+   "fieldname": "tenant_id",
+   "fieldtype": "Data",
+   "label": "Tenant Id"
   }
  ],
  "grid_page_length": 50,
  "icon": "fa fa-issue",
  "idx": 61,
  "links": [],
- "modified": "2026-03-18 16:39:08.614360",
+ "modified": "2026-03-19 13:07:58.087239",
  "modified_by": "Administrator",
  "module": "Helpdesk",
  "name": "HD Ticket",
@@ -562,7 +567,7 @@
  "sort_order": "DESC",
  "states": [],
  "subject_field": "subject",
- "timeline_field": "contact",
+ "timeline_field": "customer",
  "title_field": "subject",
  "track_changes": 1,
  "track_seen": 1

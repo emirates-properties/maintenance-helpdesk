@@ -55,6 +55,7 @@ def create_svr_log(data):
             'assigned_to': clean_value(data.get('assigned_to')),
             'priority': clean_value(data.get('priority')),
             'remarks': clean_value(data.get('remarks')),
+            'supervisor_inspection_required': int(data.get('supervisor_inspection_required', 0)),
             'status': clean_value(data.get('status', 'OPEN')),
             'work_done_by': clean_value(data.get('work_done_by', 'EPFM'))
         })

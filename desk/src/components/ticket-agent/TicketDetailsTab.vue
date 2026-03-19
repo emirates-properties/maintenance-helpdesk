@@ -15,10 +15,25 @@
           "
         >
           <template v-for="field in section.fields">
-            <Link
-              v-if="field.visible"
-              :key="field.fieldname"
+            <FormControl
+              v-if="field.visible && field.fieldtype === 'Data'"
+              :key="'data-' + field.fieldname"
               :ref="(el) => setFieldRef(field.fieldname, el)"
+              class="form-control-core"
+              :id="field.fieldname"
+              :class="section.group ? 'flex-1' : 'w-full'"
+              type="text"
+              :label="field.label"
+              :placeholder="field.placeholder"
+              :modelValue="field.value"
+              @change="
+              (val: any) => handleFieldUpdate(field.fieldname, val.target.value, true)
+            "
+            />
+            <Link
+              v-else-if="field.visible"
+              :key="'link-' + field.fieldname"
+              :ref="(el: any) => setFieldRef(field.fieldname, el)"
               class="form-control-core"
               :id="field.fieldname"
               :class="section.group ? 'flex-1' : 'w-full'"
@@ -28,6 +43,7 @@
               :doctype="field.doctype"
               :modelValue="field.value"
               :required="field.required"
+              :filters="field.filters"
               @update:model-value="
               (val:string) => handleFieldUpdate(field.fieldname, val,true)
             "
@@ -73,6 +89,7 @@ import {
   FieldValue,
   TicketSymbol,
 } from "@/types";
+import { FormControl } from "frappe-ui";
 import { computed, inject, ref } from "vue";
 import TicketField from "../TicketField.vue";
 import AssignTo from "./AssignTo.vue";
@@ -85,31 +102,51 @@ const activities = inject(ActivitiesSymbol);
 const { getFields, getField } = getMeta("HD Ticket");
 const { notifyTicketUpdate } = useNotifyTicketUpdate(ticket.value?.name);
 
-// ticket_type, priority, customer, agent_group
+// ticket_type, priority, customer, agent_group, property, unit, contract_no
 const coreFields = computed(() => {
   // TODO: to confirm whether customizations should apply to core fields as well
   const fieldsMeta = getFields();
   if (!fieldsMeta || fieldsMeta.length === 0) {
     return [];
   }
+  
+  // Get field metadata for new fields
+  const propertyField = getField("property");
+  const unitField = getField("unit");
+  const contractField = getField("contract_no");
+  const contactField = getField("contact");
+  const tenantIdField = getField("tenant_id");
+  
+  console.log("Property field:", propertyField);
+  console.log("Unit field:", unitField);
+  console.log("Contract field:", contractField);
+  console.log("Contact field:", contactField);
+  console.log("Tenant ID field:", tenantIdField);
+  
   const _coreFields = [
     { group: true, fields: [getField("ticket_type"), getField("priority")] },
     { group: false, fields: [getField("customer")] },
+    { group: false, fields: [contactField] },
     { group: true, fields: [getField("agent_group")] },
+    { group: false, fields: [propertyField] },
+    { group: true, fields: [unitField, contractField] },
+    { group: false, fields: [tenantIdField] },
   ];
 
   _coreFields.forEach((section) => {
-    section.fields = section.fields.map((f) => {
-      f = parseField(f, ticket.value.doc);
+    section.fields = section.fields
+      .filter((f) => f !== null && f !== undefined) // Filter out null/undefined fields
+      .map((f) => {
+        f = parseField(f, ticket.value.doc);
 
-      // cant handle required depends on as we directly set the value in DB on change
-      f["required"] = f.reqd;
-      f["ref"] = f.fieldname;
+        // cant handle required depends on as we directly set the value in DB on change
+        f["required"] = f.reqd;
+        f["ref"] = f.fieldname;
 
-      f = getFieldInFormat(f, f);
-      f["visible"] = true;
-      return f;
-    });
+        f = getFieldInFormat(f, f);
+        f["visible"] = true;
+        return f;
+      });
   });
   return _coreFields;
 });
@@ -126,9 +163,14 @@ const customFields = computed(() => {
     "ticket_type",
     "priority",
     "customer",
+    "contact",
     "agent_group",
     "subject",
     "status",
+    "property",
+    "unit",
+    "contract_no",
+    "tenant_id",
   ];
   customFields = customFields.filter((f) => !_coreFields.includes(f.fieldname));
   let _customFields = customFields.map((f) => {
@@ -144,7 +186,7 @@ const customFields = computed(() => {
 });
 
 function getFieldInFormat(fieldTemplate, fieldMeta) {
-  return {
+  const baseField = {
     label: fieldMeta?.label || fieldTemplate.fieldname,
     value: ticket.value.doc[fieldTemplate.fieldname],
     fieldtype: fieldMeta?.fieldtype,
@@ -160,6 +202,15 @@ function getFieldInFormat(fieldTemplate, fieldMeta) {
     required: fieldTemplate.required || fieldMeta?.required || false,
     visible: fieldMeta.display_via_depends_on && !fieldMeta.hidden,
   };
+
+  // Add property filter for unit field
+  if (fieldTemplate.fieldname === "unit" && ticket.value.doc.property) {
+    baseField.filters = {
+      property: ticket.value.doc.property
+    };
+  }
+
+  return baseField;
 }
 
 function handleFieldUpdate(
@@ -168,6 +219,12 @@ function handleFieldUpdate(
   isCoreFieldUpdated = false
 ) {
   if (ticket.value.doc[fieldname] == value) return;
+  
+  // Clear unit when property changes
+  if (fieldname === "property" && ticket.value.doc.unit) {
+    ticket.value.setValue.submit({ unit: null });
+  }
+  
   if (isCoreFieldUpdated) {
     const label = getField(fieldname)?.label || fieldname;
     notifyTicketUpdate(label, value as string);

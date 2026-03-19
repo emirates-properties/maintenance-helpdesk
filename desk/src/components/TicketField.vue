@@ -111,9 +111,14 @@ const component = computed(() => {
       ],
     });
   } else if (textFields.includes(props.field.fieldtype)) {
+    if (props.field.fieldtype === "Data") {
+      return h(FormControl, {
+        type: "text",
+      });
+    }
     return h(FormControl, {
       type: "textarea",
-      rows: props.field.fieldtype === "Data" ? 1 : 2,
+      rows: 2,
     });
   } else if (props.field.fieldtype === "Datetime") {
     return h(DateTimePicker, {
