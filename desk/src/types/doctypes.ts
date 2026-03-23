@@ -32,7 +32,7 @@ export interface HDTicketStatus extends DocType {
   parsed_color?: string;
 }
 
-// Last updated: 2026-01-16 14:23:14.181727
+// Last updated: 2026-03-19 13:07:58.087239
 export interface HDTicket extends DocType {
   /** Subject: Data */
   subject: string;
@@ -74,7 +74,7 @@ export interface HDTicket extends DocType {
   avg_response_time?: any;
   /** Resolution Details: Text Editor */
   resolution_details?: string;
-  /** Opening Date: Date */
+  /** Opening Date: Date */Different port → ❌ needs proxy/env
   opening_date?: string;
   /** Opening Time: Time */
   opening_time?: any;
@@ -84,7 +84,7 @@ export interface HDTicket extends DocType {
   resolution_time?: any;
   /** User Resolution Time: Duration */
   user_resolution_time?: any;
-  /** Contact: Link (Contact) */
+  /** Contact: Data */
   contact?: string;
   /** Customer: Link (HD Customer) */
   customer?: string;
@@ -97,7 +97,7 @@ export interface HDTicket extends DocType {
   /** Content Type: Data */
   content_type?: string;
   /** Feedback (Extra): Long Text */
-  feedback_extra?: any;
+  feedback_extra?: any;Different port → ❌ needs proxy/env
   /** Feedback (Option): Link (HD Ticket Feedback Option) */
   feedback?: string;
   /** Rating: Rating */
@@ -118,21 +118,31 @@ export interface HDTicket extends DocType {
   last_customer_response?: string;
   /** Ticket raised outside working hours: Check */
   raised_outside_working_hours: 0 | 1;
+  /** SVR Log Id: Link (EPFM Maintanace Log) */
+  svr_log_id?: string;
+  /** Property: Link (PM Property) */
+  property?: string;
+  /** Contract No: Data */
+  contract_no?: string;
+  /** Unit: Link (PM Unit) */
+  unit?: string;
+  /** Tenant Id: Data */
+  tenant_id?: string;
 }
 
-// Last updated: 2024-03-23 16:01:27.847608
+// Last updated: 2020-09-29 20:12:14.456785
 export interface AssignmentRuleUser extends ChildDocType {
   /** User: Link (User) */
   user: string;
 }
 
-// Last updated: 2024-03-23 16:01:27.759155
+// Last updated: 2019-09-21 16:55:09.376291
 export interface AssignmentRuleDay extends ChildDocType {
   /** Day: Select */
   day?: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 }
 
-// Last updated: 2025-08-25 17:09:11.644603
+// Last updated: 2021-07-16 22:51:35.505575
 export interface AssignmentRule extends DocType {
   /** Document Type: Link (DocType) */
   document_type: string;

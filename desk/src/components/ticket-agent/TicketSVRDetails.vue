@@ -267,15 +267,14 @@ const openSVRLog = () => {
   if (svrLog.value && svrLog.value.name) {
     const logId = svrLog.value.name;
     
-    // Open the EPFM Vue app on port 8081
-    // Ports: Helpdesk (8080/8082), EPFM (8081), Backend (8000)
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
+    // Get EPFM URL from environment variable
+    // In dev: http://localhost:8081 (from .env)
+    // In prod: configured via deployment (e.g., https://epfm.yourdomain.com)
+    // If empty: uses relative path for same-domain deployments
+    const baseUrl = import.meta.env.VITE_EPFM_URL || '';
+    const epfmUrl = `${baseUrl}/epfm-ot/maintenance-log/${logId}`;
     
-    // Always use port 8081 for EPFM Vue app
-    const epfmUrl = `${protocol}//${hostname}:8081/epfm-ot/maintenance-log/${logId}`;
-    
-    console.log('Opening SVR log in EPFM Vue app at:', epfmUrl);
+    console.log('Opening SVR log in EPFM app at:', epfmUrl);
     window.open(epfmUrl, '_blank');
   }
 };
