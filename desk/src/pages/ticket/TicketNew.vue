@@ -234,11 +234,39 @@ const visibleFields = computed(() => {
     (f) => !isCustomerPortal.value || !f.hide_from_customer
   );
   if (!_fields) return [];
+  
+  // Apply property filter to unit field
+  _fields = _fields.map(field => {
+    if (field.fieldname === 'unit') {
+      const propertyValue = templateFields['property'];
+      if (propertyValue) {
+        return {
+          ...field,
+          link_filters: JSON.stringify([['PM Unit', 'property', '=', propertyValue]]),
+          disabled: false
+        };
+      } else {
+        return {
+          ...field,
+          link_filters: null,
+          disabled: true
+        };
+      }
+    }
+    return field;
+  });
+  
   return _fields.map((field) => parseField(field, templateFields));
 });
 
 function handleOnFieldChange(e: any, fieldname: string, fieldtype: string) {
   templateFields[fieldname] = e.value;
+  
+  // Clear unit when property changes
+  if (fieldname === 'property' && templateFields['unit']) {
+    templateFields['unit'] = '';
+  }
+  
   const fieldDependentFns = customOnChange.value?.[fieldname];
   if (fieldDependentFns) {
     fieldDependentFns.forEach((fn: Function) => {

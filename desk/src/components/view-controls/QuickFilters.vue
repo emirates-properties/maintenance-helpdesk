@@ -43,6 +43,15 @@ function applyQuickFilter(filter, value) {
   } else {
     delete filters[field];
   }
+  
+  // Clear dependent filters when property changes
+  if (field === 'property') {
+    // Clear unit filter when property is changed or cleared
+    if (filters['unit']) {
+      delete filters['unit'];
+    }
+  }
+  
   listViewActions.applyFilters(filters);
 }
 

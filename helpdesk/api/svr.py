@@ -153,3 +153,98 @@ def update_svr_log(name, data):
     except Exception as e:
         frappe.log_error(f"Error updating SVR log: {str(e)}")
         frappe.throw(_("Failed to update SVR log: {0}").format(str(e)))
+
+
+@frappe.whitelist()
+def get_ticket_svr_logs(ticket_id):
+    """
+    Get all EPFM Maintenance Logs for a specific ticket
+    
+    Args:
+        ticket_id: HD Ticket ID
+        
+    Returns:
+        List of SVR logs associated with the ticket
+    """
+    try:
+        if not ticket_id:
+            return []
+        
+        # Query all SVR logs linked to this ticket
+        svr_logs = frappe.get_all(
+            'EPFM Maintanace Log',
+            filters={'ticket_id': ticket_id},
+            fields=[
+                'name', 'svr_number', 'date', 'status', 'priority',
+                'zone', 'property', 'unit', 'contract_number', 'tenant_name',
+                'service_category', 'assigned_to', 'work_done_by', 'remarks',
+                'supervisor_inspection_required', 'creation', 'modified', 'modified_by'
+            ],
+            order_by='creation desc'
+        )
+        
+        # Fetch tags for each SVR log
+        for log in svr_logs:
+            tags = frappe.get_all(
+                'EPFM Maintenance Log Tag',
+                filters={'parent': log.name},
+                fields=['tag'],
+                pluck='tag'
+            )
+            log['tags'] = tags
+        
+        return svr_logs
+        
+    except Exception as e:
+        frappe.logger().error(f"Error fetching SVR logs for ticket {ticket_id}: {str(e)}")
+        frappe.log_error(f"Error fetching SVR logs for ticket: {str(e)}")
+        return []
+
+
+@frappe.whitelist()
+def get_previous_ticket_history(email, current_ticket_id=None):
+    """
+    Get all tickets raised by a specific email address, excluding the current ticket.
+
+    Args:
+        email: The email address (raised_by field)
+        current_ticket_id: The current ticket to exclude
+
+    Returns:
+        List of tickets with key details
+    """
+    if not email:
+        return []
+
+    try:
+        filters = {"raised_by": email}
+        if current_ticket_id:
+            filters["name"] = ("!=", current_ticket_id)
+
+        tickets = frappe.get_all(
+            "HD Ticket",
+            filters=filters,
+            fields=[
+                "name",
+                "subject",
+                "status",
+                "priority",
+                "ticket_type",
+                "agent_group",
+                "contact",
+                "property",
+                "unit",
+                "creation",
+                "resolution_date",
+                "svr_log_id",
+                "is_merged",
+            ],
+            order_by="creation desc",
+            limit=50,
+        )
+
+        return tickets
+
+    except Exception as e:
+        frappe.log_error(f"Error fetching previous ticket history for {email}: {str(e)}")
+        return []

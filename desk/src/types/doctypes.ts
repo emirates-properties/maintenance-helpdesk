@@ -32,7 +32,7 @@ export interface HDTicketStatus extends DocType {
   parsed_color?: string;
 }
 
-// Last updated: 2026-03-19 13:07:58.087239
+// Last updated: 2026-03-25 09:19:42.236392
 export interface HDTicket extends DocType {
   /** Subject: Data */
   subject: string;
@@ -74,7 +74,7 @@ export interface HDTicket extends DocType {
   avg_response_time?: any;
   /** Resolution Details: Text Editor */
   resolution_details?: string;
-  /** Opening Date: Date */Different port → ❌ needs proxy/env
+  /** Opening Date: Date */
   opening_date?: string;
   /** Opening Time: Time */
   opening_time?: any;
@@ -97,7 +97,7 @@ export interface HDTicket extends DocType {
   /** Content Type: Data */
   content_type?: string;
   /** Feedback (Extra): Long Text */
-  feedback_extra?: any;Different port → ❌ needs proxy/env
+  feedback_extra?: any;
   /** Feedback (Option): Link (HD Ticket Feedback Option) */
   feedback?: string;
   /** Rating: Rating */

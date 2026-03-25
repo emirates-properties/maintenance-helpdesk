@@ -7,6 +7,7 @@
   >
     <template #tab-panel="{ tab }">
       <TicketSVRDetails v-if="tab.name === 'svr'" />
+      <TicketPreviousHistory v-else-if="tab.name === 'history'" />
       <TicketAgentActivities
         v-else-if="Boolean(activities.data)"
         ref="ticketAgentActivitiesRef"
@@ -58,6 +59,7 @@ import {
   EmailIcon,
   PhoneIcon,
 } from "@/components/icons";
+import LucideHistory from "~icons/lucide/history";
 import { useActiveTabManager } from "@/composables/useActiveTabManager";
 import { useTelephonyStore } from "@/stores/telephony";
 import {
@@ -72,6 +74,7 @@ import { storeToRefs } from "pinia";
 import { computed, ComputedRef, defineAsyncComponent, inject, ref } from "vue";
 import TicketAgentActivities from "../ticket/TicketAgentActivities.vue";
 import TicketSVRDetails from "./TicketSVRDetails.vue";
+import TicketPreviousHistory from "./TicketPreviousHistory.vue";
 
 const CommunicationArea = defineAsyncComponent(
   () => import("@/components/CommunicationArea.vue")
@@ -106,6 +109,11 @@ const tabs: ComputedRef<TabObject[]> = computed(() => {
       name: "svr",
       label: "SVR Details",
       icon: DetailsIcon,
+    },
+    {
+      name: "history",
+      label: "Ticket History",
+      icon: LucideHistory,
     },
   ];
 

@@ -375,7 +375,23 @@ function getValueControl(f) {
     if (fieldtype == "Dynamic Link") {
       return h(FormControl, { type: "text" });
     }
-    return h(Link, { class: "form-control", doctype: options, value: f.value });
+    
+    // Apply cascading filters for unit based on property
+    let linkFilters = {};
+    if (field.fieldname === 'unit' && options === 'PM Unit') {
+      // Find property filter value
+      const propertyFilter = filters.value.filters.find(filter => filter.field.fieldname === 'property');
+      if (propertyFilter && propertyFilter.value) {
+        linkFilters = { property: propertyFilter.value };
+      }
+    }
+    
+    return h(Link, { 
+      class: "form-control", 
+      doctype: options, 
+      value: f.value,
+      filters: linkFilters
+    });
   } else if (typeNumber.includes(fieldtype)) {
     return h(FormControl, { type: "number" });
   } else if (typeDate.includes(fieldtype) && operator == "between") {
@@ -456,7 +472,17 @@ function setfilter(data) {
 }
 
 function updateFilter(data, index) {
-  filters.value.delete(Array.from(filters.value)[index]);
+  const oldFilter = Array.from(filters.value)[index];
+  filters.value.delete(oldFilter);
+  
+  // Clear unit filter when property filter is changed
+  if (oldFilter.field.fieldname === 'property') {
+    const unitFilterIndex = Array.from(filters.value).findIndex(f => f.field.fieldname === 'unit');
+    if (unitFilterIndex !== -1) {
+      filters.value.delete(Array.from(filters.value)[unitFilterIndex]);
+    }
+  }
+  
   filters.value.add({
     fieldname: data.value,
     operator: getDefaultOperator(data.fieldtype),
@@ -472,7 +498,17 @@ function updateFilter(data, index) {
 }
 
 function removeFilter(index) {
-  filters.value.delete(Array.from(filters.value)[index]);
+  const filter = Array.from(filters.value)[index];
+  filters.value.delete(filter);
+  
+  // Clear unit filter when property filter is removed
+  if (filter.field.fieldname === 'property') {
+    const unitFilterIndex = Array.from(filters.value).findIndex(f => f.field.fieldname === 'unit');
+    if (unitFilterIndex !== -1) {
+      filters.value.delete(Array.from(filters.value)[unitFilterIndex]);
+    }
+  }
+  
   apply();
 }
 
@@ -489,6 +525,15 @@ function updateValue(value, filter) {
   } else {
     filter.value = value;
   }
+  
+  // Clear unit filter when property value is changed
+  if (filter.field.fieldname === 'property') {
+    const unitFilter = Array.from(filters.value).find(f => f.field.fieldname === 'unit');
+    if (unitFilter) {
+      unitFilter.value = '';
+    }
+  }
+  
   apply();
 }
 

@@ -477,6 +477,8 @@
   {
    "fieldname": "property",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Property",
    "options": "PM Property"
   },
@@ -489,6 +491,8 @@
   {
    "fieldname": "unit",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Unit",
    "options": "PM Unit"
   },
@@ -502,7 +506,7 @@
  "icon": "fa fa-issue",
  "idx": 61,
  "links": [],
- "modified": "2026-03-19 13:07:58.087239",
+ "modified": "2026-03-25 09:19:42.236392",
  "modified_by": "Administrator",
  "module": "Helpdesk",
  "name": "HD Ticket",
@@ -562,13 +566,11 @@
  "row_format": "Dynamic",
  "search_fields": "status,subject,raised_by",
  "sender_field": "raised_by",
- "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "subject_field": "subject",
  "timeline_field": "customer",
- "title_field": "subject",
  "track_changes": 1,
  "track_seen": 1
 }

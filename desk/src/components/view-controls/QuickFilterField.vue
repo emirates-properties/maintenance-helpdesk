@@ -20,6 +20,7 @@
     v-else-if="filter.type === 'Link'"
     :value="props.value"
     :doctype="filter.options"
+    :filters="getLinkFilters(filter)"
     :placeholder="filter.label"
     @change="(data) => updateFilter(filter, data)"
     class="w-44"
@@ -44,6 +45,7 @@
 import { Link } from "@/components";
 import { useDebounceFn } from "@vueuse/core";
 import { DatePicker, DateTimePicker, FormControl, TextInput } from "frappe-ui";
+import { inject, computed } from "vue";
 
 const props = defineProps({
   filter: {
@@ -58,11 +60,30 @@ const props = defineProps({
 
 const emit = defineEmits(["applyQuickFilter"]);
 
+// Inject listViewData to access current filter values
+const listViewData = inject("listViewData");
+const { list } = listViewData || {};
+
 const debouncedFn = useDebounceFn((f, value) => {
   emit("applyQuickFilter", f, value);
 }, 500);
 
 function updateFilter(f, value) {
   emit("applyQuickFilter", f, value);
+}
+
+// Function to determine filters for Link fields based on dependencies
+function getLinkFilters(filter) {
+  // Handle unit filter - should be filtered by selected property
+  if (filter.name === 'unit' && filter.options === 'PM Unit') {
+    const currentFilters = list?.params?.filters || {};
+    const propertyValue = currentFilters['property'];
+    
+    if (propertyValue) {
+      return { property: propertyValue };
+    }
+  }
+  
+  return {};
 }
 </script>

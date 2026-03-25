@@ -374,6 +374,9 @@ def merge_ticket(source: int, target: int):
         message=message,
     )
 
+    # reply_via_agent may set the status back to Replied — force it to Closed
+    frappe.db.set_value("HD Ticket", source, "status", "Closed", update_modified=False)
+
     # comment in target ticket that
     c = frappe.new_doc("HD Ticket Comment")
     c.commented_by = frappe.session.user
