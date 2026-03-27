@@ -158,6 +158,28 @@ const options = {
     resolution_by: {
       custom: ({ row, item }) => handle_resolution_by_field(row, item),
     },
+    _tags: {
+      custom: ({ item }) => {
+        const tags: { tag: string; colour: string }[] = Array.isArray(item) ? item : [];
+        if (tags.length === 0)
+          return h("span", { class: "text-ink-gray-4 text-xs" }, "-");
+        return h(
+          "div",
+          { class: "flex flex-wrap gap-1 items-center" },
+          tags.map((t) =>
+            h(
+              "span",
+              {
+                class:
+                  "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white",
+                style: { backgroundColor: t.colour || "#94a3b8" },
+              },
+              t.tag
+            )
+          )
+        );
+      },
+    },
   },
   isCustomerPortal: isCustomerPortal.value,
   selectable: true,

@@ -1072,6 +1072,12 @@ class HDTicket(Document):
                 "options": "Contact",
                 "width": "8rem",
             },
+            {
+                "label": "Tags",
+                "type": "Tags",
+                "key": "_tags",
+                "width": "12rem",
+            },
         ]
         customer_portal_columns = [
             {

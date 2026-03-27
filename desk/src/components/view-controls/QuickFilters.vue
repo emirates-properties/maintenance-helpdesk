@@ -28,7 +28,7 @@ const listViewData = inject("listViewData");
 const listViewActions = inject("listViewActions");
 const { list, quickFilters } = listViewData;
 
-const directValueFilterTypes = ["Check", "Select", "Link", "Date", "Datetime"];
+const directValueFilterTypes = ["Check", "Select", "Link", "Date", "Datetime", "Table MultiSelect"];
 
 function applyQuickFilter(filter, value) {
   let filters = { ...list.params?.filters };
@@ -56,7 +56,9 @@ function applyQuickFilter(filter, value) {
 }
 
 function getDefaultValue(quickFilter) {
-  return quickFilter.type === "Check" ? false : "";
+  if (quickFilter.type === "Check") return false;
+  if (quickFilter.type === "Table MultiSelect") return [];
+  return "";
 }
 
 function getValue(quickFilter, filters) {

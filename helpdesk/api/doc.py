@@ -105,6 +105,17 @@ def get_list_data(
     rows.append("name") if "name" not in rows else rows
     if doctype == "HD Ticket":
         rows.append("_seen") if "_seen" not in rows else rows
+
+    # Convert tags filter (Table MultiSelect) to child table filter syntax
+    tags_filter_values = None
+    if doctype == "HD Ticket" and isinstance(filters, dict) and "tags" in filters:
+        tags_filter_values = filters.pop("tags")
+
+    # _tags is a virtual column injected after fetch; remove from SQL fields list
+    rows = [r for r in rows if r != "_tags"]
+
+    frappe.log_error(f"DEBUG get_list_data filters={repr(filters)} type={type(filters)}", "debug_tags")
+
     data = (
         frappe.get_list(
             doctype,
@@ -115,6 +126,38 @@ def get_list_data(
         )
         or []
     )
+
+    # If tags filter was applied, filter results to tickets that have matching tags
+    if tags_filter_values and data:
+        tag_values = tags_filter_values if isinstance(tags_filter_values, list) else [tags_filter_values]
+        matching_tickets = set(
+            frappe.get_all(
+                "HD Ticket Tag",
+                filters=[["tag", "in", tag_values]],
+                pluck="parent",
+            )
+        )
+        data = [d for d in data if str(d.get("name")) in matching_tickets]
+
+    # Attach _tags list to every HD Ticket row (for column display)
+    if doctype == "HD Ticket" and data:
+        ticket_names = [str(d.get("name")) for d in data]
+        tag_rows = frappe.get_all(
+            "HD Ticket Tag",
+            filters=[["parent", "in", ticket_names]],
+            fields=["parent", "tag"],
+        )
+        # Build colour map from HD PMS Tags
+        all_tags = frappe.get_all("HD PMS Tags", fields=["tag_name", "colour"])
+        colour_map = {t.tag_name: t.colour for t in all_tags}
+        # Group by ticket
+        tags_by_ticket = {}
+        for row in tag_rows:
+            tags_by_ticket.setdefault(str(row.parent), []).append(
+                {"tag": row.tag, "colour": colour_map.get(row.tag, "#94a3b8")}
+            )
+        for d in data:
+            d["_tags"] = tags_by_ticket.get(str(d.get("name")), [])
 
     if doctype == "TP Call Log":
         data = parse_call_logs(data)
@@ -417,6 +460,9 @@ def get_quick_filters(doctype: str, show_customer_portal_fields: bool = False):
 
         if field.fieldtype == "Link":
             options = field.options
+
+        if field.fieldtype == "Table MultiSelect":
+            options = field.options  # child doctype name; frontend resolves linked doctype
 
         quick_filters.append(
             {

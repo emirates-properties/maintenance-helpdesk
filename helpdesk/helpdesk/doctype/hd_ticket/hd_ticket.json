@@ -19,6 +19,7 @@
   "contract_no",
   "unit",
   "tenant_id",
+  "tags",
   "cb00",
   "ticket_type",
   "agent_group",
@@ -324,6 +325,7 @@
   {
    "fieldname": "contact",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Contact"
   },
   {
@@ -500,13 +502,20 @@
    "fieldname": "tenant_id",
    "fieldtype": "Data",
    "label": "Tenant Id"
+  },
+  {
+   "fieldname": "tags",
+   "fieldtype": "Table MultiSelect",
+   "in_standard_filter": 1,
+   "label": "Tags",
+   "options": "HD Ticket Tag"
   }
  ],
  "grid_page_length": 50,
  "icon": "fa fa-issue",
  "idx": 61,
  "links": [],
- "modified": "2026-03-25 09:19:42.236392",
+ "modified": "2026-03-27 15:51:11.061530",
  "modified_by": "Administrator",
  "module": "Helpdesk",
  "name": "HD Ticket",

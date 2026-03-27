@@ -25,6 +25,15 @@
     @change="(data) => updateFilter(filter, data)"
     class="w-44"
   />
+  <SearchMultiSelect
+    v-else-if="filter.type === 'Table MultiSelect'"
+    :model-value="Array.isArray(props.value) ? props.value : []"
+    :options="tagOptions"
+    :placeholder="filter.label"
+    :label="filter.label"
+    selection-text="tags"
+    @update:model-value="(val) => updateFilter(filter, val)"
+  />
   <component
     v-else-if="['Date', 'Datetime'].includes(filter.type)"
     class="border-none w-44"
@@ -43,8 +52,9 @@
 </template>
 <script setup>
 import { Link } from "@/components";
+import SearchMultiSelect from "@/components/SearchMultiSelect.vue";
 import { useDebounceFn } from "@vueuse/core";
-import { DatePicker, DateTimePicker, FormControl, TextInput } from "frappe-ui";
+import { DatePicker, DateTimePicker, FormControl, TextInput, createListResource } from "frappe-ui";
 import { inject, computed } from "vue";
 
 const props = defineProps({
@@ -53,7 +63,7 @@ const props = defineProps({
     required: true,
   },
   value: {
-    type: [String, Boolean],
+    type: [String, Boolean, Array],
     required: true,
   },
 });
@@ -63,6 +73,18 @@ const emit = defineEmits(["applyQuickFilter"]);
 // Inject listViewData to access current filter values
 const listViewData = inject("listViewData");
 const { list } = listViewData || {};
+
+// Load HD PMS Tags for the Table MultiSelect filter
+const pmsTags = createListResource({
+  doctype: "HD PMS Tags",
+  fields: ["tag_name", "colour"],
+  filters: { is_active: 1 },
+  auto: computed(() => props.filter.type === "Table MultiSelect"),
+});
+
+const tagOptions = computed(() =>
+  (pmsTags.data || []).map((t) => ({ value: t.tag_name, label: t.tag_name }))
+);
 
 const debouncedFn = useDebounceFn((f, value) => {
   emit("applyQuickFilter", f, value);

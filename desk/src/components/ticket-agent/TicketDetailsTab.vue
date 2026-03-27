@@ -171,6 +171,7 @@ const customFields = computed(() => {
     "unit",
     "contract_no",
     "tenant_id",
+    "tag",
   ];
   customFields = customFields.filter((f) => !_coreFields.includes(f.fieldname));
   let _customFields = customFields.map((f) => {
