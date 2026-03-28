@@ -228,6 +228,7 @@ def get_previous_ticket_history(email, current_ticket_id=None):
                 "name",
                 "subject",
                 "status",
+                "status_category",
                 "priority",
                 "ticket_type",
                 "agent_group",

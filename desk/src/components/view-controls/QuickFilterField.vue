@@ -21,18 +21,17 @@
     :value="props.value"
     :doctype="filter.options"
     :filters="getLinkFilters(filter)"
-    :placeholder="filter.label"
+    :placeholder="getPlaceholder(filter)"
+    :disabled="isFilterDisabled(filter)"
     @change="(data) => updateFilter(filter, data)"
     class="w-44"
   />
-  <SearchMultiSelect
+  <MultiSelect
     v-else-if="filter.type === 'Table MultiSelect'"
-    :model-value="Array.isArray(props.value) ? props.value : []"
+    v-model="tagSelection"
     :options="tagOptions"
     :placeholder="filter.label"
-    :label="filter.label"
-    selection-text="tags"
-    @update:model-value="(val) => updateFilter(filter, val)"
+    :loading="pmsTags.loading"
   />
   <component
     v-else-if="['Date', 'Datetime'].includes(filter.type)"
@@ -52,10 +51,9 @@
 </template>
 <script setup>
 import { Link } from "@/components";
-import SearchMultiSelect from "@/components/SearchMultiSelect.vue";
 import { useDebounceFn } from "@vueuse/core";
-import { DatePicker, DateTimePicker, FormControl, TextInput, createListResource } from "frappe-ui";
-import { inject, computed } from "vue";
+import { DatePicker, DateTimePicker, FormControl, TextInput, MultiSelect, createListResource } from "frappe-ui";
+import { inject, computed, watch } from "vue";
 
 const props = defineProps({
   filter: {
@@ -74,6 +72,17 @@ const emit = defineEmits(["applyQuickFilter"]);
 const listViewData = inject("listViewData");
 const { list } = listViewData || {};
 
+// Watch for property changes and clear unit if property changes
+watch(
+  () => list?.params?.filters?.property,
+  (newProperty, oldProperty) => {
+    // If property changed and this is the unit filter, clear it
+    if (props.filter.name === 'unit' && newProperty !== oldProperty && props.value) {
+      updateFilter(props.filter, '');
+    }
+  }
+);
+
 // Load HD PMS Tags for the Table MultiSelect filter
 const pmsTags = createListResource({
   doctype: "HD PMS Tags",
@@ -85,6 +94,15 @@ const pmsTags = createListResource({
 const tagOptions = computed(() =>
   (pmsTags.data || []).map((t) => ({ value: t.tag_name, label: t.tag_name }))
 );
+
+const tagSelection = computed({
+  get() {
+    return Array.isArray(props.value) ? props.value : [];
+  },
+  set(newValue) {
+    updateFilter(props.filter, newValue);
+  }
+});
 
 const debouncedFn = useDebounceFn((f, value) => {
   emit("applyQuickFilter", f, value);
@@ -107,5 +125,27 @@ function getLinkFilters(filter) {
   }
   
   return {};
+}
+
+// Function to determine if a filter should be disabled
+function isFilterDisabled(filter) {
+  // Disable unit filter if no property is selected
+  if (filter.name === 'unit' && filter.options === 'PM Unit') {
+    const currentFilters = list?.params?.filters || {};
+    return !currentFilters['property'];
+  }
+  return false;
+}
+
+// Function to get dynamic placeholder text
+function getPlaceholder(filter) {
+  // Show helpful message for unit filter when no property selected
+  if (filter.name === 'unit' && filter.options === 'PM Unit') {
+    const currentFilters = list?.params?.filters || {};
+    if (!currentFilters['property']) {
+      return 'Select property first';
+    }
+  }
+  return filter.label;
 }
 </script>

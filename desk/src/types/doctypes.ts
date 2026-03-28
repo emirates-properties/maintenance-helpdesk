@@ -32,7 +32,7 @@ export interface HDTicketStatus extends DocType {
   parsed_color?: string;
 }
 
-// Last updated: 2026-03-25 09:19:42.236392
+// Last updated: 2026-03-27 15:51:11.061530
 export interface HDTicket extends DocType {
   /** Subject: Data */
   subject: string;
@@ -128,6 +128,8 @@ export interface HDTicket extends DocType {
   unit?: string;
   /** Tenant Id: Data */
   tenant_id?: string;
+  /** Tags: Table MultiSelect (HD Ticket Tag) */
+  tags: HDTicketTag[];
 }
 
 // Last updated: 2020-09-29 20:12:14.456785
@@ -270,4 +272,10 @@ export interface HDAgent extends DocType {
   is_active: 0 | 1;
   /** Image: Attach Image */
   user_image?: string;
+}
+
+// Last updated: 2026-03-27 00:00:00.000000
+export interface HDTicketTag extends ChildDocType {
+  /** Tag: Link (HD PMS Tags) */
+  tag: string;
 }

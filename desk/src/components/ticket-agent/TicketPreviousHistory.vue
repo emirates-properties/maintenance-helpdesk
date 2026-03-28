@@ -45,7 +45,7 @@
                 {{ t.status }}
               </span>
               <Button
-                v-if="!t.is_merged && !currentTicket?.is_merged"
+                v-if="canShowMergeButton(t)"
                 variant="outline"
                 size="sm"
                 :icon-left="LucideMerge"
@@ -180,6 +180,24 @@ watch(
 
 const loading = computed(() => historyResource.loading);
 const tickets = computed(() => historyResource.data || []);
+
+// Function to check if merge button should be shown (same logic as header)
+function canShowMergeButton(previousTicket: any) {
+  // Check current ticket eligibility (same as header logic)
+  const currentStatusCategory = currentTicket.value?.status_category;
+  const currentCanMerge = 
+    !currentTicket.value?.is_merged &&
+    currentStatusCategory &&
+    ["Open", "Paused"].includes(currentStatusCategory);
+  
+  // Check previous ticket eligibility
+  const previousCanMerge = 
+    !previousTicket.is_merged &&
+    previousTicket.status_category &&
+    ["Open", "Paused"].includes(previousTicket.status_category);
+  
+  return currentCanMerge && previousCanMerge;
+}
 
 // Merge state
 const showMergeDialog = ref(false);

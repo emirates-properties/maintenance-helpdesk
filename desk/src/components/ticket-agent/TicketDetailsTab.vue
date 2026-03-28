@@ -39,11 +39,12 @@
               :class="section.group ? 'flex-1' : 'w-full'"
               :page-length="10"
               :label="field.label"
-              :placeholder="field.placeholder"
+              :placeholder="isFieldDisabled(field) ? 'Select property first' : field.placeholder"
               :doctype="field.doctype"
               :modelValue="field.value"
               :required="field.required"
               :filters="field.filters"
+              :disabled="isFieldDisabled(field)"
               @update:model-value="
               (val:string) => handleFieldUpdate(field.fieldname, val,true)
             "
@@ -101,6 +102,15 @@ const customizations = inject(CustomizationSymbol);
 const activities = inject(ActivitiesSymbol);
 const { getFields, getField } = getMeta("HD Ticket");
 const { notifyTicketUpdate } = useNotifyTicketUpdate(ticket.value?.name);
+
+// Function to check if a field should be disabled
+function isFieldDisabled(field: any) {
+  // Disable unit field if no property is selected
+  if (field.fieldname === 'unit' && !ticket.value.doc.property) {
+    return true;
+  }
+  return false;
+}
 
 // ticket_type, priority, customer, agent_group, property, unit, contract_no
 const coreFields = computed(() => {
