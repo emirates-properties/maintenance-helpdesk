@@ -72,6 +72,22 @@
           />
         </Tooltip>
       </div>
+      <!-- divider (show only if tags exist) -->
+      <div v-if="assignedTags.length > 0" class="border-l border-outline-gray-2 h-[13px]" />
+      <!-- Tags -->
+      <div v-if="assignedTags.length > 0" class="flex items-center gap-1.5">
+        <LucideTag class="size-4 text-ink-gray-6" />
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <Badge
+            v-for="tag in assignedTags"
+            :key="tag.tag"
+            :label="tag.tag"
+            variant="subtle"
+            theme="gray"
+            class="!bg-surface-gray-2"
+          />
+        </div>
+      </div>
     </div>
   </teleport>
 </template>
@@ -87,8 +103,13 @@ import {
 } from "@/utils";
 import { Badge, dayjs, Tooltip, dayjsLocal } from "frappe-ui";
 import { computed, inject } from "vue";
+import LucideTag from "~icons/lucide/tag";
 
 const ticket = inject(TicketSymbol);
+
+const assignedTags = computed(() => {
+  return ticket?.value?.doc?.tags || [];
+});
 
 const firstResponse = computed(() => {
   if (ticket.value?.get?.loading) return { label: "", color: "" };

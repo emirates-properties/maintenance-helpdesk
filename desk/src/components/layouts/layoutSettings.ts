@@ -1,5 +1,6 @@
 import LucideBookOpen from "~icons/lucide/book-open";
 import LucideContact2 from "~icons/lucide/contact-2";
+import LucideTag from "~icons/lucide/tag";
 import LucideTicket from "~icons/lucide/ticket";
 import { OrganizationsIcon } from "../icons";
 import PhoneIcon from "../icons/PhoneIcon.vue";
@@ -25,6 +26,11 @@ export const agentPortalSidebarOptions = [
     label: __("Contacts"),
     icon: LucideContact2,
     to: "ContactList",
+  },
+  {
+    label: __("Tags"),
+    icon: LucideTag,
+    to: "TagsManagement",
   },
   {
     label: __("Call Logs"),

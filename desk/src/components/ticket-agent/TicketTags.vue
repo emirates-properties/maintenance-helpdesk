@@ -7,43 +7,51 @@
       </div>
 
       <template v-else>
-        <!-- MultiSelect for managing tags -->
-        <div class="mb-5">
+        <!-- Button-based tag assignment -->
+        <div>
           <h3 class="text-sm font-semibold text-ink-gray-9 mb-3">
             Assigned Tags ({{ assignedTags.length }})
           </h3>
-          <MultiSelect
-            v-model="selectedTagValues"
-            :options="tagOptions"
-            placeholder="Select tags"
-            :loading="allTags.loading"
-          />
-        </div>
-
-        <!-- All available tags list -->
-        <div class="border-t border-outline-gray-2 pt-4">
-          <h3 class="text-sm font-semibold text-ink-gray-9 mb-3">
-            All Tags
-          </h3>
-          <div class="space-y-2">
-            <div
-              v-for="t in (allTags.data || [])"
-              :key="t.name"
-              class="flex items-center gap-3 py-1.5"
+          
+          <!-- Tag buttons -->
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="tag in availableTags"
+              :key="tag.name"
+              @click="toggleTag(tag.tag_name)"
+              class="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all hover:scale-105"
+              :class="isTagAssigned(tag.tag_name) 
+                ? 'border-ink-gray-9 bg-surface-gray-2 shadow-sm' 
+                : 'border-outline-gray-2 bg-surface-white hover:bg-surface-gray-1'"
             >
               <span
                 class="inline-block w-3 h-3 rounded-full flex-shrink-0"
-                :style="{ backgroundColor: t.colour || '#94a3b8' }"
+                :style="{ backgroundColor: tag.colour || '#94a3b8' }"
               />
-              <span class="text-sm text-ink-gray-8 flex-1">{{ t.tag_name }}</span>
-              <span
-                class="text-xs px-2 py-0.5 rounded-full"
-                :class="t.is_active ? 'bg-green-100 text-green-700' : 'bg-surface-gray-2 text-ink-gray-6'"
+              <span 
+                class="text-sm font-medium"
+                :class="isTagAssigned(tag.tag_name) ? 'text-ink-gray-9' : 'text-ink-gray-7'"
               >
-                {{ t.is_active ? 'Active' : 'Inactive' }}
+                {{ tag.tag_name }}
               </span>
-            </div>
+              <LucideCheck 
+                v-if="isTagAssigned(tag.tag_name)"
+                class="w-4 h-4 text-green-600"
+              />
+            </button>
           </div>
+          
+          <!-- Empty state -->
+          <div
+            v-if="!availableTags || availableTags.length === 0"
+            class="text-center py-8 text-ink-gray-6 text-sm"
+          >
+            No active tags available. Create tags from the Tags page.
+          </div>
+          
+          <p class="text-xs text-ink-gray-6 mt-3">
+            Click tags to assign or unassign them to this ticket
+          </p>
         </div>
       </template>
     </div>
@@ -52,8 +60,9 @@
 
 <script setup lang="ts">
 import { TicketSymbol } from '@/types';
-import { MultiSelect, LoadingIndicator, createListResource } from 'frappe-ui';
+import { LoadingIndicator, createListResource } from 'frappe-ui';
 import { computed, inject } from 'vue';
+import LucideCheck from "~icons/lucide/check";
 
 const ticket = inject(TicketSymbol);
 
@@ -64,20 +73,36 @@ const allTags = createListResource({
   auto: true,
 });
 
-const tagOptions = computed(() =>
-  (allTags.data || []).filter((t: any) => t.is_active).map((t: any) => ({ label: t.tag_name, value: t.tag_name }))
-);
+const availableTags = computed(() => {
+  return (allTags.data || []).filter((t: any) => t.is_active);
+});
 
 const assignedTags = computed(() => {
   return ticket?.value?.doc?.tags || [];
 });
 
-const selectedTagValues = computed<string[]>({
-  get() {
-    return (ticket?.value?.doc?.tags || []).map((r: { tag: string }) => r.tag);
-  },
-  set(values: string[]) {
-    ticket?.value?.setValue.submit({ tags: values.map((v) => ({ tag: v })) });
-  },
+const assignedTagNames = computed(() => {
+  return assignedTags.value.map((t: { tag: string }) => t.tag);
 });
+
+function isTagAssigned(tagName: string): boolean {
+  return assignedTagNames.value.includes(tagName);
+}
+
+function toggleTag(tagName: string) {
+  let currentTags = [...assignedTagNames.value];
+  
+  if (isTagAssigned(tagName)) {
+    // Remove tag
+    currentTags = currentTags.filter(t => t !== tagName);
+  } else {
+    // Add tag
+    currentTags.push(tagName);
+  }
+  
+  // Update ticket tags
+  ticket?.value?.setValue.submit({ 
+    tags: currentTags.map((v) => ({ tag: v })) 
+  });
+}
 </script>

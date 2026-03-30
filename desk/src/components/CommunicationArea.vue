@@ -222,7 +222,7 @@ onClickOutside(
     }
   },
   {
-    ignore: [".tippy-box", ".tippy-content"],
+    ignore: [".tippy-box", ".tippy-content", "[role='dialog']", ".fixed.inset-0"],
   }
 );
 

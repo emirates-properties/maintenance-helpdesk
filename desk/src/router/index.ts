@@ -88,6 +88,11 @@ const routes = [
     component: () => import("@/pages/desk/contact/Contacts.vue"),
   },
   {
+    path: "/tags",
+    name: "TagsManagement",
+    component: () => import("@/pages/desk/TagsManagement.vue"),
+  },
+  {
     path: "/agents",
     name: "AgentList",
     redirect: "/tickets",

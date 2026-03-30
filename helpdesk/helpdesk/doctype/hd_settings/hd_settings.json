@@ -58,6 +58,10 @@
   "setup_complete",
   "initial_helpdesk_name_setup_skipped",
   "column_break_hjfh",
+  "ai_configuration_section",
+  "enable_ai_features",
+  "google_ai_api_key",
+  "column_break_ai",
   "search_tab",
   "name_weight",
   "subject_weight",
@@ -145,6 +149,30 @@
   },
   {
    "fieldname": "column_break_hjfh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ai_configuration_section",
+   "fieldtype": "Section Break",
+   "label": "AI Configuration"
+  },
+  {
+   "default": "0",
+   "description": "Enable AI-powered features such as automated reply suggestions for agents",
+   "fieldname": "enable_ai_features",
+   "fieldtype": "Check",
+   "label": "Enable AI Features"
+  },
+  {
+   "depends_on": "eval:doc.enable_ai_features",
+   "description": "Enter your Google AI API key to enable AI-powered reply generation. Get your API key from Google AI Studio.",
+   "fieldname": "google_ai_api_key",
+   "fieldtype": "Password",
+   "label": "Google AI API Key",
+   "mandatory_depends_on": "eval:doc.enable_ai_features"
+  },
+  {
+   "fieldname": "column_break_ai",
    "fieldtype": "Column Break"
   },
   {

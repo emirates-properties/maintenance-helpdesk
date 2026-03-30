@@ -1,4 +1,5 @@
 export { default as AssignmentModal } from "./AssignmentModal.vue";
+export { default as AIReplyModal } from "./AIReplyModal.vue";
 export { default as AttachmentItem } from "./AttachmentItem.vue";
 export { default as Autocomplete } from "./Autocomplete.vue";
 export { default as SavedRepliesSelectorModal } from "./SavedRepliesSelectorModal.vue";

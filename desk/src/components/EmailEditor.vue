@@ -137,6 +137,21 @@
                 <SavedReplyIcon class="h-4" />
               </template>
             </Button>
+            <Button
+              variant="ghost"
+              @click="showAIReplyModal = true"
+              :title="__('Generate AI-powered reply suggestions')"
+              class="relative group hover:bg-purple-50"
+            >
+              <template #prefix>
+                <LucideSparkles class="h-4 w-4 text-purple-600" />
+              </template>
+              <span class="text-sm font-medium text-purple-600">{{ __("Draft with AI") }}</span>
+              <span class="absolute -top-1 -right-1 flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+              </span>
+            </Button>
           </div>
           <TextEditorFixedMenu class="ml-1" :buttons="textEditorMenuButtons" />
         </div>
@@ -166,10 +181,17 @@
     @apply="applySavedReplies"
     :ticketId="ticketId"
   />
+  <AIReplyModal
+    v-if="showAIReplyModal"
+    v-model="showAIReplyModal"
+    :ticketId="ticketId"
+    @select="applyAISuggestion"
+  />
 </template>
 
 <script setup lang="ts">
 import {
+  AIReplyModal,
   AttachmentItem,
   MultiSelectInput,
   SavedRepliesSelectorModal,
@@ -205,9 +227,11 @@ import {
   watch,
 } from "vue";
 import SavedReplyIcon from "./icons/SavedReplyIcon.vue";
+import LucideSparkles from "~icons/lucide/sparkles";
 
 const editorRef = ref(null);
 const showSavedRepliesSelectorModal = ref(false);
+const showAIReplyModal = ref(false);
 const quotedContentRef = ref<HTMLElement | null>(null);
 
 const props = defineProps({
@@ -303,6 +327,31 @@ function applySavedReplies(template: string) {
     ? (newEmail.value = template)
     : (newEmail.value = newEmail.value + "\n" + template);
   showSavedRepliesSelectorModal.value = false;
+}
+
+function applyAISuggestion(suggestion: { text: string }) {
+  // Format the AI suggestion text into HTML paragraphs
+  const formattedText = suggestion.text
+    .split('\n\n')
+    .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+  
+  // Clear current content and insert AI suggestion
+  if (editorRef.value?.editor) {
+    editorRef.value.editor.commands.setContent(formattedText);
+    
+    // Show success message
+    toast.success('AI reply inserted! You can now edit and send.');
+    
+    // Focus at the end of the inserted content
+    nextTick(() => {
+      editorRef.value?.editor?.commands?.focus("end");
+    });
+  } else {
+    // Fallback if editor is not ready
+    newEmail.value = formattedText;
+    toast.success('AI reply inserted!');
+  }
 }
 
 const sendMail = createResource({
