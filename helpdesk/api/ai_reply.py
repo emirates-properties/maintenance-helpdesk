@@ -10,13 +10,14 @@ from helpdesk.utils import agent_only
 
 @frappe.whitelist()
 @agent_only
-def generate_reply_suggestions(ticket_id: str, tone: str = "professional"):
+def generate_reply_suggestions(ticket_id: str, tone: str = "professional", user_input: str = ""):
 	"""
 	Generate AI-powered reply suggestions for a ticket.
 	
 	Args:
 		ticket_id: ID of the HD Ticket
 		tone: Tone of the reply - professional, friendly, concise, or detailed
+		user_input: Optional additional context or instructions from the agent
 	
 	Returns:
 		dict: Contains suggestions list and metadata
@@ -51,12 +52,16 @@ def generate_reply_suggestions(ticket_id: str, tone: str = "professional"):
 	
 	# Generate AI suggestions
 	try:
+		# Debug logging
+		frappe.logger().info(f"AI Reply Generation - Ticket: {ticket_id}, Tone: {tone}, User Input: '{user_input}'")
+		
 		suggestions = generate_ai_suggestions(
-			settings.get_password("google_ai_api_key"),
+			settings,
 			ticket.subject,
 			ticket.description or "",
 			last_customer_message,
-			tone.lower()
+			tone.lower(),
+			user_input
 		)
 		
 		return {
@@ -66,13 +71,25 @@ def generate_reply_suggestions(ticket_id: str, tone: str = "professional"):
 			"tone": tone
 		}
 	except Exception as e:
+		error_message = str(e)
 		frappe.log_error(
-			message=str(e),
+			message=error_message,
 			title=f"AI Reply Generation Error - Ticket {ticket_id}"
 		)
-		frappe.throw(
-			_("Failed to generate AI suggestions. Please try again or contact support if the issue persists.")
-		)
+		
+		# Check for rate limit errors
+		if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message or "quota" in error_message.lower():
+			frappe.throw(
+				_("AI quota exceeded. Please wait a few minutes and try again, or upgrade your Google AI API plan for higher limits.")
+			)
+		elif "404" in error_message or "NOT_FOUND" in error_message:
+			frappe.throw(
+				_("AI model not found. Please contact your administrator to check the configuration.")
+			)
+		else:
+			frappe.throw(
+				_("Failed to generate AI suggestions. Please try again or contact support if the issue persists.")
+			)
 
 
 def get_last_customer_communication(ticket_id: str) -> str:
@@ -103,35 +120,47 @@ def get_last_customer_communication(ticket_id: str) -> str:
 
 
 def generate_ai_suggestions(
-	api_key: str,
+	settings,
 	subject: str,
 	description: str,
 	last_message: str,
-	tone: str
+	tone: str,
+	user_input: str = ""
 ) -> list[dict]:
 	"""
 	Generate reply suggestions using Google Generative AI.
 	
 	Args:
-		api_key: Google AI API key
+		settings: HD Settings document object
 		subject: Ticket subject
 		description: Ticket description
 		last_message: Last customer message
 		tone: Desired tone of response
+		user_input: Optional additional context from the agent
 	
 	Returns:
 		list: List of suggestion dictionaries with text and tone
 	"""
 	# Initialize Google AI client
+	api_key = settings.get_password("google_ai_api_key")
 	client = genai.Client(api_key=api_key)
 	
-	# Define tone-specific instructions
+	# Load tone-specific instructions from settings
 	tone_instructions = {
-		"professional": "Write in a professional, formal tone. Be courteous and maintain business etiquette. Keep it concise (2-3 short paragraphs).",
-		"friendly": "Write in a warm, friendly tone. Be approachable and personable while remaining helpful. Keep it brief (2-3 short paragraphs).",
-		"concise": "Write a very brief response. Maximum 3-4 sentences. Get straight to the point.",
-		"detailed": "Write a thorough response with clear explanations. Use 3-4 paragraphs with actionable steps."
+		"professional": settings.ai_tone_professional or "Write in a professional, formal tone. Be courteous and maintain business etiquette. Keep it concise (2-3 short paragraphs).",
+		"friendly": settings.ai_tone_friendly or "Write in a warm, friendly tone. Be approachable and personable while remaining helpful. Keep it brief (2-3 short paragraphs).",
+		"concise": settings.ai_tone_concise or "Write a very brief response. Maximum 3-4 sentences. Get straight to the point.",
+		"detailed": settings.ai_tone_detailed or "Write a thorough response with clear explanations. Use 3-4 paragraphs with actionable steps."
 	}
+	
+	# Load general instructions from settings
+	general_instructions = settings.ai_general_instructions or """- Address the customer's main concern directly
+- Be empathetic and solution-oriented
+- Keep it SHORT and professional (max 150 words per reply)
+- Do NOT include URLs, links, or long tracking IDs
+- Do NOT include email signatures, greetings like "Dear Customer", or closings like "Best regards"
+- Start directly with the response content
+- Each reply should offer a slightly different approach"""
 	
 	# Construct the prompt
 	prompt = f"""You are a professional customer support agent. Generate 3 concise email reply suggestions for this support ticket.
@@ -143,19 +172,24 @@ Last Customer Message:
 
 Instructions:
 - {tone_instructions.get(tone, tone_instructions["professional"])}
-- Address the customer's main concern directly
-- Be empathetic and solution-oriented
-- Keep it SHORT and professional (max 150 words per reply)
-- Do NOT include URLs, links, or long tracking IDs
-- Do NOT include email signatures, greetings like "Dear Customer", or closings like "Best regards"
-- Start directly with the response content
-- Each reply should offer a slightly different approach
-
-Generate exactly 3 distinct reply options, numbered 1-3."""
+{general_instructions}
+"""
+	
+	# Add user input if provided
+	if user_input and user_input.strip():
+		prompt += f"\n\nAgent's Additional Context:\n{user_input.strip()}\n"
+		frappe.logger().info(f"AI Reply - User input added to prompt: '{user_input.strip()}'")
+	else:
+		frappe.logger().info("AI Reply - No user input provided")
+	
+	prompt += "\nGenerate exactly 3 distinct reply options, numbered 1-3."
+	
+	# Debug: Log the full prompt
+	frappe.logger().info(f"AI Reply - Full Prompt:\n{prompt}")
 	
 	# Generate responses using Google AI
 	response = client.models.generate_content(
-		model="gemini-2.5-flash-lite",
+		model="gemini-2.5-flash",
 		contents=prompt,
 		config=types.GenerateContentConfig(
 			temperature=0.8,  # Higher temperature for more variation

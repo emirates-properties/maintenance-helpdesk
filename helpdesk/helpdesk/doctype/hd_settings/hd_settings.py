@@ -19,9 +19,38 @@ from helpdesk.helpdesk.doctype.hd_ticket.hd_ticket import (
 
 class HDSettings(Document):
     def validate(self):
+        self.set_ai_defaults()
         self.validate_auto_close_days()
         self.validate_email_contents()
         self.validate_send_feedback_when_ticket_closed()
+
+    def set_ai_defaults(self):
+        """Set default values for AI instruction fields if they are empty"""
+        if not self.enable_ai_features:
+            return
+
+        # Set default general instructions
+        if not self.ai_general_instructions:
+            self.ai_general_instructions = """- Address the customer's main concern directly
+- Be empathetic and solution-oriented
+- Keep it SHORT and professional (max 150 words per reply)
+- Do NOT include URLs, links, or long tracking IDs
+- Do NOT include email signatures, greetings like "Dear Customer", or closings like "Best regards"
+- Start directly with the response content
+- Each reply should offer a slightly different approach"""
+
+        # Set default tone-specific instructions
+        if not self.ai_tone_professional:
+            self.ai_tone_professional = "Write in a professional, formal tone. Be courteous and maintain business etiquette. Keep it concise (2-3 short paragraphs)."
+
+        if not self.ai_tone_friendly:
+            self.ai_tone_friendly = "Write in a warm, friendly tone. Be approachable and personable while remaining helpful. Keep it brief (2-3 short paragraphs)."
+
+        if not self.ai_tone_concise:
+            self.ai_tone_concise = "Write a very brief response. Maximum 3-4 sentences. Get straight to the point."
+
+        if not self.ai_tone_detailed:
+            self.ai_tone_detailed = "Write a thorough response with clear explanations. Use 3-4 paragraphs with actionable steps."
 
     def validate_auto_close_days(self):
         if self.auto_close_tickets and self.auto_close_after_days <= 0:

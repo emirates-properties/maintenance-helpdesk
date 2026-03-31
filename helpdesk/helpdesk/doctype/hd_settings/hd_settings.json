@@ -61,6 +61,11 @@
   "ai_configuration_section",
   "enable_ai_features",
   "google_ai_api_key",
+  "ai_general_instructions",
+  "ai_tone_professional",
+  "ai_tone_friendly",
+  "ai_tone_concise",
+  "ai_tone_detailed",
   "column_break_ai",
   "search_tab",
   "name_weight",
@@ -170,6 +175,41 @@
    "fieldtype": "Password",
    "label": "Google AI API Key",
    "mandatory_depends_on": "eval:doc.enable_ai_features"
+  },
+  {
+   "depends_on": "eval:doc.enable_ai_features",
+   "description": "General instructions for AI reply generation (bullet points). These apply to all tones.",
+   "fieldname": "ai_general_instructions",
+   "fieldtype": "Small Text",
+   "label": "AI General Instructions"
+  },
+  {
+   "depends_on": "eval:doc.enable_ai_features",
+   "description": "Instructions for professional tone replies",
+   "fieldname": "ai_tone_professional",
+   "fieldtype": "Small Text",
+   "label": "Professional Tone Instructions"
+  },
+  {
+   "depends_on": "eval:doc.enable_ai_features",
+   "description": "Instructions for friendly tone replies",
+   "fieldname": "ai_tone_friendly",
+   "fieldtype": "Small Text",
+   "label": "Friendly Tone Instructions"
+  },
+  {
+   "depends_on": "eval:doc.enable_ai_features",
+   "description": "Instructions for concise tone replies",
+   "fieldname": "ai_tone_concise",
+   "fieldtype": "Small Text",
+   "label": "Concise Tone Instructions"
+  },
+  {
+   "depends_on": "eval:doc.enable_ai_features",
+   "description": "Instructions for detailed tone replies",
+   "fieldname": "ai_tone_detailed",
+   "fieldtype": "Small Text",
+   "label": "Detailed Tone Instructions"
   },
   {
    "fieldname": "column_break_ai",

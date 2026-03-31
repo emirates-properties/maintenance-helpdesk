@@ -1,188 +1,205 @@
 <template>
-  <Dialog
-    v-model="show"
-    :options="{
-      size: '4xl',
-      title: 'Draft with AI',
-    }"
+  <!-- Right Side Panel Overlay -->
+  <Transition
+    enter-active-class="transition-all duration-300 ease-out"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="transition-all duration-200 ease-in"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
   >
-    <template #body-title>
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 bg-purple-100 px-3 py-1.5 rounded-lg">
-          <LucideSparkles class="h-5 w-5 text-purple-600" />
-          <span class="text-xs font-bold text-purple-700 uppercase tracking-wide">AI Powered</span>
-        </div>
-      </div>
-      <h2 class="text-2xl font-semibold text-ink-gray-9 mt-2">{{ __("Draft with AI") }}</h2>
-      <p class="text-sm text-ink-gray-6 mt-1">{{ __("Generate AI-powered reply suggestions for this ticket") }}</p>
-    </template>
-    <template #body>
-      <div class="max-h-[600px]" :style="{ height: 'calc(100vh - 8rem)' }">
-        <!-- Header with close button -->
-        <div class="flex items-center justify-end w-full px-6 pt-4 pb-2">
-          <Button
-            variant="ghost"
-            icon="x"
-            @click="show = false"
-          />
-        </div>
+    <div
+      v-if="show"
+      class="fixed inset-0 z-50 flex items-stretch justify-end"
+      @click.self="show = false"
+    >
+      <!-- Backdrop -->
+      <div class="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
 
-        <!-- Tone Selector & Generate Button -->
-        <div class="p-6 pb-4 border-y border-outline-gray-2">
-          <div class="flex flex-col gap-4">
-            <div>
-              <label class="block text-sm font-medium text-ink-gray-7 mb-3">
+      <!-- Side Panel -->
+      <Transition
+        enter-active-class="transition-transform duration-300 ease-out"
+        enter-from-class="translate-x-full"
+        enter-to-class="translate-x-0"
+        leave-active-class="transition-transform duration-200 ease-in"
+        leave-from-class="translate-x-0"
+        leave-to-class="translate-x-full"
+      >
+        <div
+          v-if="show"
+          class="relative w-full max-w-xl bg-white shadow-2xl flex flex-col h-full"
+        >
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-outline-gray-2">
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2 bg-purple-100 px-3 py-1.5 rounded-lg">
+                <LucideSparkles class="h-4 w-4 text-purple-600" />
+                <span class="text-xs font-semibold text-purple-700 uppercase tracking-wide">AI Copilot</span>
+              </div>
+            </div>
+            <button
+              @click="show = false"
+              class="p-2 hover:bg-surface-gray-1 rounded-lg transition-colors"
+            >
+              <LucideX class="size-5 text-ink-gray-6" />
+            </button>
+          </div>
+
+          <!-- Content -->
+          <div class="flex-1 overflow-y-auto">
+            <!-- Tone Selector -->
+            <div class="px-6 py-5 border-b border-outline-gray-2">
+              <label class="block text-sm font-medium text-ink-gray-8 mb-3">
                 {{ __("Select Reply Tone") }}
               </label>
-              <div class="flex gap-2 flex-wrap">
-                <Button
+              <div class="grid grid-cols-2 gap-2">
+                <button
                   v-for="tone in toneOptions"
                   :key="tone.value"
-                  :variant="selectedTone === tone.value ? 'solid' : 'outline'"
-                  size="sm"
                   @click="selectedTone = tone.value"
-                  class="flex-1 min-w-[120px]"
+                  :class="[
+                    'px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
+                    selectedTone === tone.value
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'bg-surface-gray-1 text-ink-gray-7 hover:bg-surface-gray-2'
+                  ]"
                 >
                   {{ tone.label }}
-                </Button>
+                </button>
               </div>
             </div>
-            <Button
-              variant="solid"
-              class="w-full"
-              :loading="generateResource.loading"
-              :disabled="!ticketId"
-              @click="generateSuggestions"
-            >
-              <template #prefix>
-                <LucideSparkles class="size-4" />
-              </template>
-              {{ generateResource.loading ? __("Generating...") : __("Generate Replies") }}
-            </Button>
-          </div>
-        </div>
 
-        <!-- Content Area -->
-        <div class="p-6 overflow-y-auto" :style="{ maxHeight: 'calc(100vh - 24rem)' }">
-          <!-- Error State -->
-          <div
-            v-if="error"
-            class="flex flex-col items-center justify-center py-12 px-4"
-          >
-            <div class="bg-surface-gray-1 rounded-full p-4 mb-4">
-              <LucideAlertCircle class="size-8 text-ink-gray-5" />
-            </div>
-            <p class="text-base font-medium text-ink-gray-8 mb-2">{{ __("Failed to Generate") }}</p>
-            <p class="text-sm text-ink-gray-6 text-center mb-4">{{ error }}</p>
-            <Button
-              variant="outline"
-              @click="generateSuggestions"
-            >
-              {{ __("Try Again") }}
-            </Button>
-          </div>
-
-          <!-- Empty State -->
-          <div
-            v-else-if="!suggestions.length && !generateResource.loading"
-            class="flex flex-col items-center justify-center py-16 px-4"
-          >
-            <div class="bg-surface-gray-1 rounded-full p-4 mb-4">
-              <LucideSparkles class="size-8 text-ink-gray-5" />
-            </div>
-            <p class="text-base font-medium text-ink-gray-8 mb-2">{{ __("No suggestions yet") }}</p>
-            <p class="text-sm text-ink-gray-6 text-center">{{ __("Select a tone and click 'Generate Replies' to get AI-powered suggestions") }}</p>
-          </div>
-
-          <!-- Loading State -->
-          <div
-            v-else-if="generateResource.loading"
-            class="space-y-4"
-          >
-            <div
-              v-for="i in 3"
-              :key="i"
-              class="border border-outline-gray-2 rounded-lg p-4 bg-surface-white animate-pulse"
-            >
-              <div class="flex items-center justify-between mb-3">
-                <div class="h-4 bg-surface-gray-2 rounded w-24"></div>
-                <div class="h-8 bg-surface-gray-2 rounded w-32"></div>
-              </div>
-              <div class="space-y-2">
-                <div class="h-3 bg-surface-gray-2 rounded w-full"></div>
-                <div class="h-3 bg-surface-gray-2 rounded w-5/6"></div>
-                <div class="h-3 bg-surface-gray-2 rounded w-4/6"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Suggestions -->
-          <div
-            v-else-if="suggestions.length"
-            class="space-y-3"
-          >
-            <div
-              v-for="suggestion in suggestions"
-              :key="suggestion.id"
-              class="border-2 border-outline-gray-2 rounded-lg p-5 bg-surface-white hover:border-outline-gray-4 transition-all duration-200"
-            >
-              <div class="flex items-start justify-between mb-3 gap-3">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-sm font-semibold text-ink-gray-9">
-                    {{ __("Suggestion") }} {{ suggestion.id }}
-                  </span>
-                  <div class="flex items-center gap-1 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                    <LucideSparkles class="h-3 w-3 text-purple-600" />
-                    <span class="text-xs font-medium text-purple-700">AI</span>
-                  </div>
-                  <span class="text-xs text-ink-gray-5 bg-surface-gray-1 px-2 py-0.5 rounded capitalize">{{ suggestion.tone }}</span>
-                </div>
-                <Button
-                  variant="solid"
-                  size="sm"
-                  @click="selectSuggestion(suggestion)"
-                  class="shrink-0"
-                >
-                  <template #prefix>
-                    <LucideCheck class="size-4" />
-                  </template>
-                  {{ __("Use") }}
-                </Button>
-              </div>
-              <div
-                class="text-sm text-ink-gray-8 leading-normal max-h-48 overflow-y-auto border-l-2 border-outline-gray-2 pl-3"
-                v-html="formatSuggestionText(suggestion.text)"
-              ></div>
+            <!-- User Input -->
+            <div class="px-6 py-5 border-b border-outline-gray-2">
+              <label class="block text-sm font-medium text-ink-gray-8 mb-2">
+                {{ __("Additional Context (Optional)") }}
+              </label>
+              <textarea
+                v-model="userInput"
+                class="w-full px-3 py-2.5 border border-outline-gray-2 rounded-lg text-sm text-ink-gray-9 placeholder-ink-gray-5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                :placeholder="__('Add specific instructions or context for the AI...')"
+                rows="3"
+              ></textarea>
             </div>
 
-            <!-- Regenerate Button -->
-            <div class="flex flex-col items-center gap-3 pt-6 pb-4 mt-6 border-t-2 border-outline-gray-3 bg-surface-gray-1 rounded-b-lg mx-[-1.5rem] px-6">
-              <p class="text-sm text-ink-gray-7 font-medium">Don't like these suggestions?</p>
+            <!-- Generate Button -->
+            <div class="px-6 py-4 border-b border-outline-gray-2">
               <Button
                 variant="solid"
-                @click="generateSuggestions"
+                class="w-full bg-purple-600 hover:bg-purple-700"
                 :loading="generateResource.loading"
-                class="w-full max-w-md"
+                :disabled="!ticketId"
+                @click="generateSuggestions"
               >
                 <template #prefix>
-                  <LucideRefreshCw class="size-5" />
+                  <LucideSparkles class="size-4" />
                 </template>
-                <span class="font-semibold">{{ generateResource.loading ? __("Generating...") : __("Generate 3 New Suggestions") }}</span>
+                {{ generateResource.loading ? __("Generating...") : __("Generate Replies") }}
               </Button>
-              <p class="text-xs text-ink-gray-5">Click to get completely different reply options</p>
+            </div>
+
+            <!-- Suggestions Area -->
+            <div class="px-6 py-5">
+              <!-- Error State -->
+              <div
+                v-if="error"
+                class="flex flex-col items-center justify-center py-10"
+              >
+                <div class="bg-red-50 rounded-full p-3 mb-3">
+                  <LucideAlertCircle class="size-7 text-red-500" />
+                </div>
+                <p class="text-sm font-medium text-ink-gray-8 mb-2">{{ __("Failed to Generate") }}</p>
+                <p class="text-xs text-ink-gray-6 text-center mb-4 max-w-xs">{{ error }}</p>
+                <button
+                  @click="generateSuggestions"
+                  class="px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                >
+                  {{ __("Try Again") }}
+                </button>
+              </div>
+
+              <!-- Empty State -->
+              <div
+                v-else-if="!suggestions.length && !generateResource.loading"
+                class="flex flex-col items-center justify-center py-16"
+              >
+                <div class="bg-purple-50 rounded-full p-4 mb-4">
+                  <LucideSparkles class="size-8 text-purple-500" />
+                </div>
+                <p class="text-sm font-medium text-ink-gray-8 mb-2">{{ __("Ready to Generate") }}</p>
+                <p class="text-xs text-ink-gray-6 text-center max-w-xs">{{ __("Select a tone and click 'Generate Replies' to get AI-powered suggestions") }}</p>
+              </div>
+
+              <!-- Loading State -->
+              <div
+                v-else-if="generateResource.loading"
+                class="space-y-3"
+              >
+                <div
+                  v-for="i in 3"
+                  :key="i"
+                  class="border border-outline-gray-2 rounded-xl p-4 animate-pulse"
+                >
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="h-3 bg-surface-gray-2 rounded w-20"></div>
+                  </div>
+                  <div class="space-y-2">
+                    <div class="h-2.5 bg-surface-gray-2 rounded w-full"></div>
+                    <div class="h-2.5 bg-surface-gray-2 rounded w-11/12"></div>
+                    <div class="h-2.5 bg-surface-gray-2 rounded w-5/6"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Suggestions -->
+              <div
+                v-else
+                class="space-y-3"
+              >
+                <div
+                  v-for="suggestion in suggestions"
+                  :key="suggestion.id"
+                  class="border border-outline-gray-2 rounded-xl p-4 hover:border-purple-300 hover:shadow-sm transition-all cursor-pointer group"
+                  @click="useSuggestion(suggestion)"
+                >
+                  <div class="flex items-start justify-between mb-3">
+                    <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                      {{ __("Option") }} {{ suggestion.id }}
+                    </span>
+                    <button
+                      class="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                      @click.stop="useSuggestion(suggestion)"
+                    >
+                      <LucideCheck class="size-3.5" />
+                    </button>
+                  </div>
+                  <p class="text-sm text-ink-gray-8 leading-relaxed whitespace-pre-wrap">
+                    {{ suggestion.text }}
+                  </p>
+                </div>
+
+                <!-- Regenerate Button -->
+                <button
+                  @click="generateSuggestions"
+                  class="w-full mt-4 px-4 py-2.5 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200"
+                >
+                  {{ __("Generate 3 New Suggestions") }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </template>
-  </Dialog>
+      </Transition>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { Dialog, Button, createResource } from "frappe-ui";
+import { Button, createResource } from "frappe-ui";
 import LucideSparkles from "~icons/lucide/sparkles";
 import LucideCheck from "~icons/lucide/check";
+import LucideX from "~icons/lucide/x";
 import LucideRefreshCw from "~icons/lucide/refresh-cw";
 import LucideAlertCircle from "~icons/lucide/alert-circle";
 
@@ -221,6 +238,7 @@ const toneOptions = [
 const selectedTone = ref("professional");
 const suggestions = ref<Suggestion[]>([]);
 const error = ref<string | null>(null);
+const userInput = ref("");
 
 // API resource for generating suggestions
 const generateResource = createResource({
@@ -248,11 +266,12 @@ function generateSuggestions() {
   generateResource.submit({
     ticket_id: props.ticketId,
     tone: selectedTone.value,
+    user_input: userInput.value,
   });
 }
 
 // Select a suggestion
-function selectSuggestion(suggestion: Suggestion) {
+function useSuggestion(suggestion: Suggestion) {
   emit("select", suggestion);
   show.value = false;
 }
@@ -270,6 +289,7 @@ watch(show, (newValue) => {
       if (!show.value) {
         suggestions.value = [];
         error.value = null;
+        userInput.value = "";
       }
     }, 300);
   }
