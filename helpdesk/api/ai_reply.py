@@ -163,7 +163,7 @@ def generate_ai_suggestions(
 - Each reply should offer a slightly different approach"""
 	
 	# Construct the prompt
-	prompt = f"""You are a professional customer support agent. Generate 3 concise email reply suggestions for this support ticket.
+	prompt = f"""You are a professional customer support agent. Generate exactly 3 distinct email reply options for this support ticket.
 
 Ticket Subject: {subject}
 
@@ -173,6 +173,8 @@ Last Customer Message:
 Instructions:
 - {tone_instructions.get(tone, tone_instructions["professional"])}
 {general_instructions}
+
+IMPORTANT: Start directly with the numbered replies (1., 2., 3.). DO NOT include any preamble text like "Here are the suggestions" or introductory sentences. Begin immediately with "1." followed by the first reply.
 """
 	
 	# Add user input if provided
@@ -216,10 +218,22 @@ def parse_ai_response(response_text: str, tone: str) -> list[dict]:
 	Returns:
 		list: List of formatted suggestions
 	"""
+	import re
+	
 	suggestions = []
 	
+	# Meta-text patterns to filter out (preambles, headers, etc.)
+	meta_patterns = [
+		r'^here\s+(are|is)\s+\d+.*suggestions?:?$',
+		r'^i\'ve\s+generated\s+\d+.*replies?:?$',
+		r'^below\s+(are|is)\s+\d+.*options?:?$',
+		r'^\d+\s+reply\s+suggestions?:?$',
+		r'^\d+\s+options?:?$',
+		r'^reply\s+suggestions?:?$',
+		r'^options?:?$',
+	]
+	
 	# Split response into separate suggestions
-	# The AI typically separates responses with numbering or clear breaks
 	parts = response_text.split("\n\n")
 	
 	# Filter and clean up the parts
@@ -231,34 +245,82 @@ def parse_ai_response(response_text: str, tone: str) -> list[dict]:
 		if not stripped:
 			continue
 		
+		# Skip meta-text preambles
+		is_meta = False
+		for pattern in meta_patterns:
+			if re.match(pattern, stripped.lower()):
+				is_meta = True
+				frappe.logger().debug(f"AI Reply - Filtering out meta-text: '{stripped}'")
+				break
+		
+		if is_meta:
+			continue
+		
 		# Check if this is a new numbered item (1., 2., 3. or **1.**, etc.)
 		if (stripped[0].isdigit() and len(stripped) > 1 and stripped[1] in ".):") or \
 		   ("**1" in stripped[:5] or "**2" in stripped[:5] or "**3" in stripped[:5]):
 			if current_suggestion:
 				cleaned_parts.append("\n\n".join(current_suggestion))
 				current_suggestion = []
-			# Remove the numbering
-			cleaned = stripped.split(".", 1)[-1].strip()
-			cleaned = cleaned.replace("**", "").strip()
+			# Remove the numbering and markdown formatting
+			cleaned = re.sub(r'^\*?\*?\d+[\.):\s]+\*?\*?', '', stripped).strip()
 			current_suggestion.append(cleaned)
-		else:
+		elif current_suggestion:
+			# Only add to current suggestion if we're already building one
 			current_suggestion.append(stripped)
 	
 	# Add the last suggestion
 	if current_suggestion:
 		cleaned_parts.append("\n\n".join(current_suggestion))
 	
-	# Format as suggestion objects
+	# Format as suggestion objects, filtering out short/empty ones
 	for i, text in enumerate(cleaned_parts[:3], 1):  # Limit to 3 suggestions
-		if text:
+		# Skip if text is too short (likely not a real suggestion)
+		if text and len(text.strip()) > 20:
 			suggestions.append({
 				"id": i,
-				"text": text,
+				"text": text.strip(),
 				"tone": tone.capitalize()
 			})
 	
-	# Ensure we have at least one suggestion
-	if not suggestions and response_text:
+	# If we still don't have suggestions, try a more aggressive approach
+	if not suggestions:
+		# Try splitting by numbered lines directly
+		lines = response_text.split("\n")
+		current = []
+		
+		for line in lines:
+			stripped = line.strip()
+			if not stripped:
+				continue
+			
+			# Check for numbered item
+			if re.match(r'^\*?\*?\d+[\.):\s]+', stripped):
+				if current:
+					text = "\n".join(current).strip()
+					if len(text) > 20:
+						suggestions.append({
+							"id": len(suggestions) + 1,
+							"text": text,
+							"tone": tone.capitalize()
+						})
+				# Start new suggestion
+				current = [re.sub(r'^\*?\*?\d+[\.):\s]+\*?\*?', '', stripped).strip()]
+			elif current:
+				current.append(stripped)
+		
+		# Add last suggestion
+		if current:
+			text = "\n".join(current).strip()
+			if len(text) > 20:
+				suggestions.append({
+					"id": len(suggestions) + 1,
+					"text": text,
+					"tone": tone.capitalize()
+				})
+	
+	# Ensure we have at least one valid suggestion
+	if not suggestions and response_text and len(response_text.strip()) > 20:
 		suggestions.append({
 			"id": 1,
 			"text": response_text.strip(),

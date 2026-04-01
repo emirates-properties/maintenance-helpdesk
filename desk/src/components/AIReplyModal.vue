@@ -14,7 +14,7 @@
       @click.self="show = false"
     >
       <!-- Backdrop -->
-      <div class="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+      <div class="absolute inset-0 bg-black/20"></div>
 
       <!-- Side Panel -->
       <Transition
@@ -60,7 +60,7 @@
                   :class="[
                     'px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
                     selectedTone === tone.value
-                      ? 'bg-purple-600 text-white shadow-sm'
+                      ? 'bg-black text-white shadow-sm'
                       : 'bg-surface-gray-1 text-ink-gray-7 hover:bg-surface-gray-2'
                   ]"
                 >
@@ -72,14 +72,16 @@
             <!-- User Input -->
             <div class="px-6 py-5 border-b border-outline-gray-2">
               <label class="block text-sm font-medium text-ink-gray-8 mb-2">
-                {{ __("Additional Context (Optional)") }}
               </label>
               <textarea
                 v-model="userInput"
                 class="w-full px-3 py-2.5 border border-outline-gray-2 rounded-lg text-sm text-ink-gray-9 placeholder-ink-gray-5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                :placeholder="__('Add specific instructions or context for the AI...')"
+                :placeholder="__('e.g., Mention our refund policy or Suggest troubleshooting steps')"
                 rows="3"
               ></textarea>
+              <p class="mt-1.5 text-xs text-ink-gray-6">
+                {{ __("Add specific instructions to help the AI generate better replies") }}
+              </p>
             </div>
 
             <!-- Generate Button -->
